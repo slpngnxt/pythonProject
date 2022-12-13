@@ -20,6 +20,3 @@ def draw_text(img, text, x, y):
   text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
   text_w, text_h = text_size
   offset = 5
-
-  cv2.rectangle(img, (x - offset, y - offset), (x + text_w + offset, y + text_h + offset), text_color_bg, -1)
-  cv2.putText(img, text, (x, y + text_h + font_scale - 1), font, font_scale, text_color, font_thickness)

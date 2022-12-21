@@ -14,7 +14,7 @@ width = network_width(network)
 height = network_height(network)
 
 # 맨 처음 실행시에만 주석 제거 하고 실행하세요!
-os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video')
+# os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video')
 
 conn = pymysql.connect(host='34.64.233.244', port=3306, user='root', passwd='qwer123', db='project',
                        charset='utf8',

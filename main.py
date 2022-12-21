@@ -8,13 +8,14 @@ import paho.mqtt.client as mqtt
 import json
 import pymysql
 
+myPath = 'C:/Users/401-24/PycharmProjects'
 # load in our YOLOv4 architecture network
-network, class_names, class_colors = load_network("C:/Users/401-24/PycharmProjects/pythonProject/darknet/cfg/yolov4-csp.cfg", "C:/Users/401-24/PycharmProjects/pythonProject/darknet/cfg/coco.data", "C:/Users/401-24/PycharmProjects/pythonProject/darknet/yolov4-csp.weights")
+network, class_names, class_colors = load_network("{}/pythonProject/darknet/cfg/yolov4-csp.cfg".format(myPath), "{}/pythonProject/darknet/cfg/coco.data".format(myPath), "{}/pythonProject/darknet/yolov4-csp.weights".format(myPath))
 width = network_width(network)
 height = network_height(network)
 
 # 맨 처음 실행시에만 주석 제거 하고 실행하세요!
-# os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video')
+# os.mkdir('/pythonProject/darknet/content/video'.format(myPath)
 
 conn = pymysql.connect(host='34.64.233.244', port=3306, user='root', passwd='qwer123', db='project',
                        charset='utf8',
@@ -69,7 +70,7 @@ def new_record(d, l):
   while d['r_finished'] == 0:
     if d['recording'] == 1:  # 레코딩중일 때는 계속 사진 찍기
       title = datetime.now().strftime('20%y-%m-%d_%H-%M-%S-%f')
-      cv2.imwrite('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}/{}.jpg'.format(d['detected_time'], title), d['img_color'])
+      cv2.imwrite('{}/pythonProject/darknet/content/{}/{}.jpg'.format(myPath, d['detected_time'], title), d['img_color'])
 
 def init_mqtt():
   client = mqtt.Client()
@@ -123,13 +124,11 @@ def bounding_box(d, l):
       left, top, right, bottom = bbox2points(bbox)
       left, top, right, bottom = int(left * width_ratio), int(top * height_ratio), int(right * width_ratio), int(
         bottom * height_ratio)
-      cv2.rectangle(d['img_color'], (left, top), (right, bottom), class_colors[label], 2)
-      cv2.putText(d['img_color'], "{} [{:.2f}]".format(label, float(confidence)),
+      cv2.rectangle(img_color, (left, top), (right, bottom), class_colors[label], 2)
+      cv2.putText(img_color, "{} [{:.2f}]".format(label, float(confidence)),
                   (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                   class_colors[label], 2)
       print("라벨 : ", label)
-      cv2.imshow("Bounding box", d['img_color'])
-
 
       # 사람이 인식 됐을 때
       if float(confidence) > 0.8 and label == 'person':
@@ -142,7 +141,7 @@ def bounding_box(d, l):
       #detected_time = datetime(int(detected_time.year), int(detected_time.month), int(detected_time.day), int(detected_time.hour), int(detected_time.minute), int(detected_time.second))
       d['detected_time'] = detected_time.strftime('20%y-%m-%d_%H-%M-%S-%f')
       l.append(d['detected_time'])
-      os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}'.format(d['detected_time']))
+      os.mkdir('{}/pythonProject/darknet/content/{}'.format(myPath, d['detected_time']))
       d['recording'] = 1
       detected_person = 1
 
@@ -150,7 +149,7 @@ def bounding_box(d, l):
       # topic = 'hy_py_camera'
       # status = 'person_detected'
       # Datetime = d['detected_time']
-      json_str = '{"sensor":"hy door sensor mqtt", "status":"door opened", "Datetime": null}'
+      json_str = '{"sensor":"door sensor", "status":"door opened", "Datetime": null}'
       print("사람 탐지 -> 정보 전송")
       #client.loop_start()
       #client.loop_stop()
@@ -164,7 +163,7 @@ def bounding_box(d, l):
         cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
                   VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['detected_time'])))
         cur.execute("""INSERT INTO History(user_id, sensor, status, datetime) 
-                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "hy door sensor db", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
+                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
         conn.commit()
         if (cur.rowcount):
           print("새로운 정보가 등록되었습니다.")
@@ -181,17 +180,19 @@ def bounding_box(d, l):
         d['detected_total'] = d['detected_total'] + 1
 
     num_of_people = 0
-    if cv2.waitKey(1) & 0xFF == 27:
+    cv2.imshow("Check Bounding Box", img_color)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+      d['box_stop'] = 1
       break
+    # cv2.waitKey()
 # darknet helper function to run detection on image
 
 def generate_video(d, l):
   import os
   import requests
   def send_file(filename):
-    files = open('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video/{}'.format(filename), 'rb')
-    #files = open('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video/testdog.jpg', 'rb')
-    #files = open('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video/video2022-12-21_09-52-14-365448.mp4', 'rb')
+    files = open('{}/pythonProject/darknet/content/video/{}'.format(myPath, filename), 'rb')
     upload = {'file': files}
     res = requests.post('http://34.64.233.244:9898/upload', files=upload)
 
@@ -200,14 +201,14 @@ def generate_video(d, l):
     if d['video_total'] < d['detected_total']:
       print('generate_video()가 실행됩니다')
       # d['making'] = 1
-      image_folder = 'C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}'.format(l[d['video_total']])
+      image_folder = '{}/pythonProject/darknet/content/{}'.format(myPath, l[d['video_total']])
       print("확인...", l[int(d['video_total'])],
-            print(os.path.isdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content')))
+            print(os.path.isdir('{}/pythonProject/darknet/content'.format(myPath))))
       images = [img for img in os.listdir(image_folder)]
       images.sort()
       print(images)
-      video_name = 'C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video/{}.mp4'.format(
-        l[int(d['video_total'])])
+      video_name = '{}/pythonProject/darknet/content/video/{}.mp4'.format(
+        myPath, l[int(d['video_total'])])
       frame = cv2.imread(os.path.join(image_folder, images[0]))
 
       height, width, layers = frame.shape
@@ -218,8 +219,8 @@ def generate_video(d, l):
         video.write(cv2.imread(os.path.join(image_folder, image)))
       video.release()
       d['recording'] = 0
-      if os.path.exists('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}'.format(l[d['video_total']])):
-        shutil.rmtree('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}'.format(l[d['video_total']]))
+      if os.path.exists('{}/pythonProject/darknet/content/{}'.format(myPath, l[d['video_total']])):
+        shutil.rmtree('{}/pythonProject/darknet/content/{}'.format(myPath, l[d['video_total']]))
       send_file('{}.mp4'.format(l[d['video_total']]))
       d['video_total'] = d['video_total'] + 1
 
@@ -285,6 +286,7 @@ if __name__ == '__main__':
     d['detected_total'] = 0
     d['r_finished'] = 0
     d['v_finished'] = 0
+    d['box_stop'] = 0
 
     # 모든 멀티프로세스를 실행시킴.
     # 각각의 프로세스는 while 무한 루프 + if / break문을 가지고 있기 때문에
@@ -320,10 +322,11 @@ if __name__ == '__main__':
       draw_text(img_color, text, x, y)
 
 
-      cv2.imshow("Person Detected!", img_color)
+      #cv2.imshow("Person Detected!", img_color)
 
       # ESC키 누르면 중지
-      if cv2.waitKey(1) & 0xFF == 27:
+      #if cv2.waitKey(1) & 0xFF == 27:
+      if d['box_stop'] == 1:
         if d['detected_total'] < len(l):
           print("종료되지 않은 영상이 있습니다.")
           d['detected_total'] = d['detected_total'] + 1

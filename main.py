@@ -142,7 +142,7 @@ def bounding_box(d, l):
       # topic = 'hy_py_camera'
       # status = 'person_detected'
       # Datetime = d['detected_time']
-      json_str = '{"sensor":"door_sensor", "status":"door_open", "Datetime": null}'
+      json_str = '{"sensor":"door sensor", "status":"door opened", "Datetime": null}'
       print("사람 탐지 -> 정보 전송")
       #client.loop_start()
       #client.loop_stop()
@@ -156,7 +156,7 @@ def bounding_box(d, l):
         cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
                   VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mpv'.format(d['detected_time'])))
         cur.execute("""INSERT INTO History(user_id, sensor, status, datetime) 
-                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "door_sensor", "door_open", detected_time))
+                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time))
         conn.commit()
         if (cur.rowcount):
           print("새로운 정보가 등록되었습니다.")

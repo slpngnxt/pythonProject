@@ -154,7 +154,7 @@ def bounding_box(d, l):
 
       with conn.cursor() as cur:
         cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
-                  VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mpv'.format(d['detected_time'])))
+                  VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['detected_time'])))
         cur.execute("""INSERT INTO History(user_id, sensor, status, datetime) 
                   VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time))
         conn.commit()

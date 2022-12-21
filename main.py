@@ -13,6 +13,9 @@ network, class_names, class_colors = load_network("C:/Users/401-24/PycharmProjec
 width = network_width(network)
 height = network_height(network)
 
+# 맨 처음 실행시에만 주석 제거 하고 실행하세요!
+os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/video')
+
 conn = pymysql.connect(host='34.64.233.244', port=3306, user='root', passwd='qwer123', db='project',
                        charset='utf8',
                        autocommit=True)
@@ -84,6 +87,7 @@ def init_mqtt():
   return client
 def bounding_box(d, l):
   import pymysql
+  import cv2
   def darknet_helper(img, width, height):
     darknet_image = make_image(width, height, 3)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -112,6 +116,7 @@ def bounding_box(d, l):
   # client.disconnect()
   client = init_mqtt()
   while d['r_finished'] == 0:
+    img_color = d['img_color']
     detections, width_ratio, height_ratio = darknet_helper(d['img_color'], width, height)
 
     for label, confidence, bbox in detections:
@@ -123,6 +128,8 @@ def bounding_box(d, l):
                   (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                   class_colors[label], 2)
       print("라벨 : ", label)
+      cv2.imshow("Bounding box", d['img_color'])
+
 
       # 사람이 인식 됐을 때
       if float(confidence) > 0.8 and label == 'person':
@@ -132,6 +139,7 @@ def bounding_box(d, l):
     if num_of_people > 0 and detected_person == 0:
       print("(1)새로운 사람이 등장하였습니다({}인)".format(num_of_people))
       detected_time = datetime.now()
+      #detected_time = datetime(int(detected_time.year), int(detected_time.month), int(detected_time.day), int(detected_time.hour), int(detected_time.minute), int(detected_time.second))
       d['detected_time'] = detected_time.strftime('20%y-%m-%d_%H-%M-%S-%f')
       l.append(d['detected_time'])
       os.mkdir('C:/Users/401-24/PycharmProjects/pythonProject/darknet/content/{}'.format(d['detected_time']))
@@ -142,7 +150,7 @@ def bounding_box(d, l):
       # topic = 'hy_py_camera'
       # status = 'person_detected'
       # Datetime = d['detected_time']
-      json_str = '{"sensor":"door sensor", "status":"door opened", "Datetime": null}'
+      json_str = '{"sensor":"hy door sensor mqtt", "status":"door opened", "Datetime": null}'
       print("사람 탐지 -> 정보 전송")
       #client.loop_start()
       #client.loop_stop()
@@ -156,7 +164,7 @@ def bounding_box(d, l):
         cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
                   VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['detected_time'])))
         cur.execute("""INSERT INTO History(user_id, sensor, status, datetime) 
-                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time))
+                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "hy door sensor db", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
         conn.commit()
         if (cur.rowcount):
           print("새로운 정보가 등록되었습니다.")
@@ -173,6 +181,8 @@ def bounding_box(d, l):
         d['detected_total'] = d['detected_total'] + 1
 
     num_of_people = 0
+    if cv2.waitKey(1) & 0xFF == 27:
+      break
 # darknet helper function to run detection on image
 
 def generate_video(d, l):

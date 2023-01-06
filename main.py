@@ -66,7 +66,7 @@ def new_record(d, l):
   d['recording'] = 0
   d['making'] = 0
   d['video_path'] = '/static/'
-  d['user_id'] = 'test9999'
+  d['user_id'] = 'test1234'
   while d['r_finished'] == 0:
     if d['recording'] == 1:  # 레코딩중일 때는 계속 사진 찍기
       title = datetime.now().strftime('20%y-%m-%d_%H-%M-%S-%f')
@@ -149,7 +149,7 @@ def bounding_box(d, l):
       # topic = 'hy_py_camera'
       # status = 'person_detected'
       # Datetime = d['detected_time']
-      json_str = '{"sensor":"door sensor", "status":"door opened", "Datetime": null}'
+      json_str = '{"sensor":"camera", "status":"person detected", "Datetime": null}'
       print("사람 탐지 -> 정보 전송")
       #client.loop_start()
       #client.loop_stop()
@@ -157,7 +157,7 @@ def bounding_box(d, l):
 
       json_object['Datetime'] = d['detected_time']
       json_str = json.dumps(json_object)
-      client.publish('house/door', json_str, 1)
+      client.publish('test1234', json_str, 1)
 
       with conn.cursor() as cur:
         cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
@@ -180,7 +180,7 @@ def bounding_box(d, l):
         d['detected_total'] = d['detected_total'] + 1
 
     num_of_people = 0
-    #cv2.imshow("Check Bounding Box", img_color)
+    cv2.imshow("Check Bounding Box", img_color)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
       d['box_stop'] = 1
@@ -213,7 +213,7 @@ def generate_video(d, l):
 
       height, width, layers = frame.shape
       fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-      video = cv2.VideoWriter(video_name, fourcc, d['fps'], (width, height))
+      video = cv2.VideoWriter(video_name, fourcc, 120, (width, height))
 
       for image in images:  # 5장 -> 1초 : 30초 -> 150장 615/150 => 2분정도 되는 frame
         video.write(cv2.imread(os.path.join(image_folder, image)))

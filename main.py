@@ -15,7 +15,7 @@ width = network_width(network)
 height = network_height(network)
 
 # 맨 처음 실행시에만 주석 제거 하고 실행하세요!
-# os.mkdir('/pythonProject/darknet/content/video'.format(myPath)
+# os.mkdir('{}/pythonProject/darknet/content/video'.format(myPath))
 
 conn = pymysql.connect(host='34.64.233.244', port=3306, user='root', passwd='qwer123', db='project',
                        charset='utf8',
@@ -180,7 +180,7 @@ def bounding_box(d, l):
         d['detected_total'] = d['detected_total'] + 1
 
     num_of_people = 0
-    cv2.imshow("Check Bounding Box", img_color)
+    #cv2.imshow("Check Bounding Box", img_color)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
       d['box_stop'] = 1
@@ -322,7 +322,7 @@ if __name__ == '__main__':
       draw_text(img_color, text, x, y)
 
 
-      #cv2.imshow("Person Detected!", img_color)
+      cv2.imshow("Person Detected!", img_color)
 
       # ESC키 누르면 중지
       #if cv2.waitKey(1) & 0xFF == 27:

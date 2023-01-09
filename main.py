@@ -13,7 +13,6 @@ myPath = 'C:/Users/401-24/PycharmProjects'
 network, class_names, class_colors = load_network("{}/pythonProject/darknet/cfg/yolov4-csp.cfg".format(myPath), "{}/pythonProject/darknet/cfg/coco.data".format(myPath), "{}/pythonProject/darknet/yolov4-csp.weights".format(myPath))
 width = network_width(network)
 height = network_height(network)
-
 # 맨 처음 실행시에만 주석 제거 하고 실행하세요!
 # os.mkdir('{}/pythonProject/darknet/content/video'.format(myPath))
 
@@ -25,24 +24,24 @@ def on_connect(client, userdata, flags, rc):
     print("connected OK")
   else:
     print("Bad connection Returned code=", rc)
-def on_disconnect(client, userdata, flags, rc=0):
-  print("disconnect : ", str(rc))
-
-
-def on_subscribe(client, userdata, mid, granted_qos):
-  print("subscribed: " + str(mid) + " " + str(granted_qos))
-
-
-def on_message(client, userdata, msg):
-  print("got message :", str(msg.payload.decode("utf-8")))
-  d = json.loads(msg.payload)
-  cur = conn.cursor()
-  cur.execute("""INSERT INTO video (user_id, video_path, file_name) 
-    VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['file_name'])))
-  conn.commit()
-  if (cur.rowcount):  # query 문의 성공여부를 확인, 0이면 변화 무
-    print('데이터가 전송되었습니다. ')
-
+# def on_disconnect(client, userdata, flags, rc=0):
+#   print("disconnect : ", str(rc))
+#
+#
+# def on_subscribe(client, userdata, mid, granted_qos):
+#   print("subscribed: " + str(mid) + " " + str(granted_qos))
+#
+#
+# def on_message(client, userdata, msg):
+#   print("got message :", str(msg.payload.decode("utf-8")))
+#   d = json.loads(msg.payload)
+#   cur = conn.cursor()
+#   cur.execute("""INSERT INTO video (user_id, video_path, file_name)
+#     VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['file_name'])))
+#   conn.commit()
+#   if (cur.rowcount):  # query 문의 성공여부를 확인, 0이면 변화 무
+#     print('데이터가 전송되었습니다. ')
+#
 
 def on_publish(client, userdata, mid):
   print("publish message :")
@@ -77,13 +76,13 @@ def init_mqtt():
   client.username_pw_set(username="admin", password="qwer123")
 
   client.on_connect = on_connect
-  client.on_disconnect = on_disconnect
-  client.on_subscribe = on_subscribe
-  client.on_message = on_message
+  # client.on_disconnect = on_disconnect
+  # client.on_subscribe = on_subscribe
+  # client.on_message = on_message
   client.on_publish = on_publish
 
   client.connect("34.64.233.244", 19883)
-  client.subscribe('house/door', 1)
+  # client.subscribe('house/door', 1)
 
   return client
 def bounding_box(d, l):
@@ -115,7 +114,6 @@ def bounding_box(d, l):
   #                     1)
   # client.loop_stop()
   # client.disconnect()
-  client = init_mqtt()
   while d['r_finished'] == 0:
     img_color = d['img_color']
     detections, width_ratio, height_ratio = darknet_helper(d['img_color'], width, height)
@@ -139,9 +137,10 @@ def bounding_box(d, l):
       print("(1)새로운 사람이 등장하였습니다({}인)".format(num_of_people))
       detected_time = datetime.now()
       #detected_time = datetime(int(detected_time.year), int(detected_time.month), int(detected_time.day), int(detected_time.hour), int(detected_time.minute), int(detected_time.second))
-      d['detected_time'] = detected_time.strftime('20%y-%m-%d_%H-%M-%S-%f')
-      l.append(d['detected_time'])
-      os.mkdir('{}/pythonProject/darknet/content/{}'.format(myPath, d['detected_time']))
+      detected_time = detected_time.strftime('20%y-%m-%d_%H-%M-%S-%f')
+      l.append(detected_time)
+      d['detected_time'] = detected_time
+      os.mkdir('{}/pythonProject/darknet/content/{}'.format(myPath, detected_time))
       d['recording'] = 1
       detected_person = 1
 
@@ -149,24 +148,25 @@ def bounding_box(d, l):
       # topic = 'hy_py_camera'
       # status = 'person_detected'
       # Datetime = d['detected_time']
-      json_str = '{"sensor":"camera", "status":"person detected", "Datetime": null}'
-      print("사람 탐지 -> 정보 전송")
-      #client.loop_start()
-      #client.loop_stop()
-      json_object = json.loads(json_str)
-
-      json_object['Datetime'] = d['detected_time']
-      json_str = json.dumps(json_object)
-      client.publish('test1234', json_str, 1)
-
-      with conn.cursor() as cur:
-        cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
-                  VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['detected_time'])))
-        cur.execute("""INSERT INTO History(user_id, sensor, status, datetime) 
-                  VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
-        conn.commit()
-        if (cur.rowcount):
-          print("새로운 정보가 등록되었습니다.")
+      # json_str = '{"sensor":"camera", "status":"person detected", "Datetime": null}'
+      # json_str = '{"sensor":"camera", "status":"person detected"}'
+      # print("사람 탐지 -> 정보 전송")
+      # #client.loop_start()
+      # #client.loop_stop()
+      # json_object = json.loads(json_str)
+      #
+      # json_object['Datetime'] = d['detected_time']
+      # json_str = json.dumps(json_object)
+      # client.publish('test1234', json_str, 1)
+      #
+      # with conn.cursor() as cur:
+      #   cur.execute("""INSERT INTO Video(user_id, video_path, file_name)
+      #             VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(d['detected_time'])))
+      #   # cur.execute("""INSERT INTO History(user_id, sensor, status, datetime)
+      #   #           VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
+      #   conn.commit()
+      #   if (cur.rowcount):
+      #     print("새로운 정보가 등록되었습니다.")
 
     elif num_of_people > 0 and detected_person == 1 and d['recording'] == 1:
       print("(2)사람이 감지되었지만 새로운 물체로 인식하지 않습니다(사람의 수는 변경되었을 수 있습니다)({}인)".format(num_of_people))
@@ -197,6 +197,7 @@ def generate_video(d, l):
     res = requests.post('http://34.64.233.244:9898/upload', files=upload)
 
   d['video_total'] = 0
+  client = init_mqtt()
   while True:
     if d['video_total'] < d['detected_total']:
       print('generate_video()가 실행됩니다')
@@ -223,6 +224,25 @@ def generate_video(d, l):
         shutil.rmtree('{}/pythonProject/darknet/content/{}'.format(myPath, l[d['video_total']]))
       send_file('{}.mp4'.format(l[d['video_total']]))
       d['video_total'] = d['video_total'] + 1
+
+      json_str = '{"sensor":"camera", "status":"person detected"}'
+      print("사람 탐지 -> 정보 전송")
+      # client.loop_start()
+      # client.loop_stop()
+      json_object = json.loads(json_str)
+
+      json_object['Datetime'] = d['detected_time']
+      json_str = json.dumps(json_object)
+      client.publish('test1234', json_str, 1)
+
+      with conn.cursor() as cur:
+        cur.execute("""INSERT INTO Video(user_id, video_path, file_name) 
+                        VALUES(%s, %s, %s)""", (d['user_id'], d['video_path'], '{}.mp4'.format(l[d['video_total']])))
+        # cur.execute("""INSERT INTO History(user_id, sensor, status, datetime)
+        #           VALUES(%s, %s, %s, %s)""", (d['user_id'], "door sensor", "door opened", detected_time.strftime('%Y-%m-%d %H:%M:%S')))
+        conn.commit()
+        if (cur.rowcount):
+          print("새로운 정보가 등록되었습니다.")
 
 
     # if cv2.waitKey(1) & 0xFF == 27:
@@ -322,7 +342,7 @@ if __name__ == '__main__':
       draw_text(img_color, text, x, y)
 
 
-      cv2.imshow("Person Detected!", img_color)
+      #cv2.imshow("Person Detected!", img_color)
 
       # ESC키 누르면 중지
       #if cv2.waitKey(1) & 0xFF == 27:
@@ -332,7 +352,7 @@ if __name__ == '__main__':
           d['detected_total'] = d['detected_total'] + 1
         print("영상 감지를 종료합니다")
         d['r_finished'] = 1
-        p.join()  # record
+        p.join()  # ecord
         print("recording이 join되었습니다")
         p2.join()  # bbox
         print("bbox가 join되었습니다")
